@@ -1,0 +1,234 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AkŞehir - Rapor Et (Adım 2)</title>
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        .report-container { max-width: 800px; margin: 2rem auto; padding: 2rem; }
+        .upload-area, .location-area { margin-bottom: 2rem; }
+        .upload-label { display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; min-height: 150px; padding: 2rem; border: 2px dashed rgba(255, 255, 255, 0.4); border-radius: 10px; text-align: center; cursor: pointer; background-color: rgba(0,0,0,0.2); transition: background-color 0.3s ease; }
+        .upload-label:hover { background-color: rgba(0,0,0,0.4); }
+        .upload-label i { font-size: 2rem; margin-bottom: 0.5rem; }
+        #image-preview { max-width: 100%; max-height: 200px; margin-top: 1rem; border-radius: 10px; display: none; }
+        #map { height: 300px; width: 100%; border-radius: 10px; margin-top: 1rem; background-color: #555; }
+        #location-display { margin-top: 1rem; padding: 1rem; background: rgba(0,0,0,0.3); border-radius: 8px; min-height: 40px; text-align: center; color: #fff; }
+        #analyzeBtn { background: linear-gradient(45deg, #2ed573, #1dd1a1); }
+        .btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+        .close-report-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2.5rem;
+            color: #fff;
+            text-decoration: none;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+        .close-report-btn:hover {
+            opacity: 1;
+            transform: rotate(90deg);
+        }
+        #loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.7);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            flex-direction: column;
+            color: #fff;
+            backdrop-filter: blur(5px);
+        }
+        #loading-overlay .fa-spinner {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-container">
+            <a href="/dashboard.php" class="logo-container"><img src="{% static 'images/logo.png' %}" alt="AkŞehir Logo" class="logo"><span class="project-name">AkŞehir</span></a>
+            <nav class="main-nav">
+                 <ul>
+                    <li><a href="/dashboard.php">Ana Sayfa</a></li>
+                    <li><a href="/rapor-et.php" class="active">Rapor Et</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <div id="loading-overlay">
+        <i class="fas fa-spinner fa-spin"></i>
+        <p>Analiz ediliyor, lütfen bekleyin...</p>
+    </div>
+
+    <main>
+        <div class="report-container glass-card">
+            <a href="/dashboard.php" class="close-report-btn" title="Kapat">&times;</a>
+            <form id="reportForm" action="/rapor-et-islem-analiz.php" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="step-header">
+                    <h2 class="step-title">2. Adım: Fotoğraf ve Konum</h2>
+                    <p class="step-description">Seçilen Kategori: <strong>{{ category }}</strong></p>
+                </div>
+                
+                <div class="upload-area">
+                    <input type="file" id="reportImage" name="reportImage" accept="image/*" style="display:none;" required>
+                    <label for="reportImage" class="upload-label">
+                        <i class="fas fa-camera"></i>
+                        <span>Fotoğraf Yükle</span>
+                    </label>
+                    <img id="image-preview" src="#" alt="Fotoğraf Önizleme">
+                </div>
+                
+                <div class="location-area">
+                    <button type="button" id="getLocationBtn" class="btn btn-secondary" style="width:100%;">
+                        <i class="fas fa-map-marker-alt"></i> Otomatik Konumumu Bul
+                    </button>
+                    <div id="map"></div>
+                    <div id="location-display">Konum bulun veya haritadan seçin.</div>
+                    <input type="hidden" name="latitude" id="latitude">
+                    <input type="hidden" name="longitude" id="longitude">
+                    <input type="hidden" name="address" id="address">
+                </div>
+
+                <div class="step-actions">
+                    <a href="/rapor-et.php" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Geri</a>
+                    <button type="submit" id="analyzeBtn" class="btn" disabled>Analiz Et <i class="fas fa-flask"></i></button>
+                </div>
+            </form>
+        </div>
+    </main>
+    
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('reportForm');
+        const analyzeBtn = document.getElementById('analyzeBtn');
+        const reportImageInput = document.getElementById('reportImage');
+        const imagePreview = document.getElementById('image-preview');
+        const uploadLabel = document.querySelector('.upload-label');
+        const locationDisplay = document.getElementById('location-display');
+        const latInput = document.getElementById('latitude');
+        const lonInput = document.getElementById('longitude');
+        const addressInput = document.getElementById('address');
+        const getLocationBtn = document.getElementById('getLocationBtn');
+        const loadingOverlay = document.getElementById('loading-overlay');
+
+        let imageFile = null;
+        let locationData = null;
+        
+        const checkFormCompletion = () => {
+            analyzeBtn.disabled = !(imageFile && locationData);
+        };
+
+        reportImageInput.addEventListener('change', () => {
+            if (reportImageInput.files && reportImageInput.files[0]) {
+                imageFile = reportImageInput.files[0];
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    imagePreview.src = e.target.result;
+                    imagePreview.style.display = 'block';
+                    uploadLabel.style.display = 'none';
+                };
+                reader.readAsDataURL(imageFile);
+                checkFormCompletion();
+            }
+        });
+
+        let map = L.map('map').setView([39.9334, 32.8597], 6);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+             attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+        }).addTo(map);
+        let marker;
+
+        const setLocationStatus = (message, isError = false) => {
+            locationDisplay.textContent = message;
+            locationDisplay.style.color = isError ? '#ffcdd2' : '#d4edda';
+            if (isError) {
+                locationData = null;
+            }
+        };
+
+        const updateLocation = async (lat, lon) => {
+            setLocationStatus("Adres bilgisi getiriliyor...");
+            if (marker) {
+                marker.setLatLng([lat, lon]);
+            } else {
+                marker = L.marker([lat, lon]).addTo(map);
+            }
+            map.setView([lat, lon], 16);
+
+            try {
+                const response = await fetch(`/api/proxy_nominatim.php?lat=${lat}&lon=${lon}`);
+
+                if (!response.ok) throw new Error(`Adres sunucusu yanıt vermiyor (HTTP ${response.status})`);
+                
+                const data = await response.json();
+                const address = data.display_name;
+
+                if (!address) throw new Error("Bu konum için adres detayı bulunamadı.");
+
+                locationData = { lat, lon, address };
+                latInput.value = lat;
+                lonInput.value = lon;
+                addressInput.value = address;
+                setLocationStatus(`✓ ${address}`);
+
+            } catch (error) {
+                const errorMessage = `Adres alınamadı. Lütfen internet bağlantınızı kontrol edin veya haritadan başka bir nokta seçin.`;
+                setLocationStatus(errorMessage, true);
+                console.error("Adres arama hatası:", error.message);
+            } finally {
+                checkFormCompletion();
+            }
+        };
+
+        getLocationBtn.addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                setLocationStatus("Tarayıcınız konum servisini desteklemiyor. Lütfen haritadan seçin.", true);
+                return;
+            }
+            setLocationStatus("Konumunuz alınıyor...");
+            navigator.geolocation.getCurrentPosition(
+                (pos) => updateLocation(pos.coords.latitude, pos.coords.longitude),
+                (error) => {
+                    let message = "Konum alınamadı. Lütfen tarayıcı izinlerini kontrol edin veya haritadan manuel olarak seçin.";
+                    if(error.code === error.PERMISSION_DENIED) {
+                        message = "Konum izni vermediniz. Lütfen haritadan bir nokta seçin.";
+                    }
+                    setLocationStatus(message, true);
+                    checkFormCompletion(); 
+                }
+            );
+        });
+
+        map.on('click', (e) => updateLocation(e.latlng.lat, e.latlng.lng));
+
+        form.addEventListener('submit', (e) => {
+            if (!imageFile || !locationData) {
+                e.preventDefault();
+                alert('Lütfen hem fotoğraf yükleyin hem de geçerli bir konum seçin.');
+                return;
+            }
+            loadingOverlay.style.display = 'flex';
+        });
+
+        checkFormCompletion();
+    });
+    </script>
+</body>
+</html>

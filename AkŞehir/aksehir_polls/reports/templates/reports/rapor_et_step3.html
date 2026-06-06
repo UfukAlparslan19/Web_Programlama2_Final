@@ -1,0 +1,85 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AkŞehir - Rapor Et (Adım 3)</title>
+    <link class="styles" rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .report-container { max-width: 800px; margin: 2rem auto; padding: 2rem; }
+        .result-grid { display: grid; grid-template-columns: 1fr; gap: 2rem; }
+        .result-item { background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 1.5rem; }
+        .result-item h4 { margin-top: 0; margin-bottom: 0.5rem; color: #1dd1a1; font-weight: 600;}
+        .result-item p { margin-top: 0; }
+        .result-image { width: 100%; border-radius: 8px; margin-bottom: 1rem; }
+        .ai-analysis { border-left: 3px solid #1dd1a1; padding-left: 1rem; }
+        .risk-level { padding: 0.5rem 1rem; border-radius: 20px; color: #fff; font-weight: 600; display: inline-block; }
+        .risk-low { background-color: #2ed573; }
+        .risk-medium { background-color: #ff9f43; }
+        .risk-high { background-color: #ff4757; }
+        textarea { width: 100%; background: rgba(0,0,0,0.2); border: 1px solid rgba(255,255,255,0.2); border-radius: 8px; color: #fff; padding: 1rem; min-height: 100px; font-family: 'Poppins', sans-serif; }
+        .close-report-btn { position: absolute; top: 15px; right: 20px; font-size: 2.5rem; color: #fff; text-decoration: none; opacity: 0.7; transition: all 0.3s ease; }
+        .close-report-btn:hover { opacity: 1; transform: rotate(90deg); }
+        .btn-submit { background: linear-gradient(45deg, #007bff, #0056b3); }
+        .btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+         <div class="header-container">
+            <a href="/dashboard.php" class="logo-container"><img src="{% static 'images/logo.png' %}" alt="AkŞehir Logo" class="logo"><span class="project-name">AkŞehir</span></a>
+            <nav class="main-nav">
+                 <ul>
+                    <li><a href="/dashboard.php">Ana Sayfa</a></li>
+                    <li><a href="/rapor-et.php" class="active">Rapor Et</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="report-container glass-card">
+            <a href="/dashboard.php" class="close-report-btn" title="Kapat">&times;</a>
+            <form id="finalReportForm" action="/rapor-et-islem-son.php" method="POST">
+                {% csrf_token %}
+                <div class="step-header">
+                    <h2 class="step-title">3. Adım: Kontrol Et ve Gönder</h2>
+                    <p class="step-description">Bilgileri kontrol edin, isterseniz not ekleyin ve raporu tamamlayın.</p>
+                </div>
+
+                <div class="result-grid">
+                    <div>
+                        <h4><i class="fas fa-image"></i> Bildirilen Sorun</h4>
+                        <img src="{{ image_path }}" alt="Rapor Edilen Sorun" class="result-image">
+                        <div class="result-item">
+                            <h4><i class="fas fa-map-marker-alt"></i> Adres</h4>
+                            <p>{{ address }}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="result-item ai-analysis">
+                        <h4><i class="fas fa-robot"></i> Yapay Zeka Analizi</h4>
+                        <p>{% if is_analysis_error %}Analiz sırasında bir hata oluştu.{% else %}{{ ai_description }}{% endif %}</p>
+                        <p><strong>Tahmini Risk Seviyesi:</strong> <span class="risk-level {{ risk_color_class }}">{{ risk_level }}</span></p>
+                    </div>
+
+                    <div class="result-item">
+                        <h4><i class="fas fa-pencil-alt"></i> Ek Notlarınız (İsteğe Bağlı)</h4>
+                        <textarea name="user_notes" placeholder="Eklemek istediğiniz başka detaylar var mı? Örneğin, sorunun ne zamandır var olduğu, aciliyeti vb."></textarea>
+                    </div>
+                </div>
+
+                <div class="step-actions">
+                    <a href="/rapor-et-adim-2.php" class="btn btn-secondary"><i class="fas fa-arrow-left"></i> Geri</a>
+                    <button type="submit" class="btn btn-submit">Raporu Gönder <i class="fas fa-paper-plane"></i></button>
+                </div>
+            </form>
+        </div>
+    </main>
+</body>
+</html>

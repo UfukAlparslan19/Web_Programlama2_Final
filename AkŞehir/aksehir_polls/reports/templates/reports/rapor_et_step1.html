@@ -1,0 +1,156 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AkŞehir - Rapor Et (Adım 1)</title>
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <style>
+        .report-container { max-width: 800px; margin: 2rem auto; padding: 2rem; }
+        .category-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1.5rem; }
+        .category-item {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+            position: relative;
+            overflow: hidden;
+            color: #fff;
+        }
+        .category-item i {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            transition: transform 0.3s ease;
+            display: block;
+        }
+        .category-item span {
+            font-weight: 500;
+            position: relative;
+            z-index: 2;
+        }
+        .category-item::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+            z-index: 1;
+        }
+        .category-item[data-category="Çöp ve Atık"]::before { background: linear-gradient(45deg, #a9a9a9, #696969); }
+        .category-item[data-category="Bozuk Yol / Kaldırım"]::before { background: linear-gradient(45deg, #78909c, #455a64); }
+        .category-item[data-category="Park ve Yeşil Alan"]::before { background: linear-gradient(45deg, #66bb6a, #388e3c); }
+        .category-item[data-category="Aydınlatma Sorunu"]::before { background: linear-gradient(45deg, #ffee58, #fbc02d); }
+        .category-item[data-category="Su Kaçağı / Sel"]::before { background: linear-gradient(45deg, #42a5f5, #1976d2); }
+        .category-item[data-category="Trafik İşaretleri"]::before { background: linear-gradient(45deg, #ff7043, #e64a19); }
+        .category-item[data-category="Gürültü Kirliliği"]::before { background: linear-gradient(45deg, #ab47bc, #7b1fa2); }
+        .category-item[data-category="Terkedilmiş Araç"]::before { background: linear-gradient(45deg, #5c6bc0, #303f9f); }
+        .category-item[data-category="Diğer"]::before { background: linear-gradient(45deg, #ec407a, #c2185b); }
+
+        .category-item:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.3);
+        }
+        .category-item:hover::before { opacity: 0.8; }
+        .category-item:hover i { transform: scale(1.1); }
+        .category-item.selected {
+            border: 2px solid #fff;
+            box-shadow: 0 0 20px rgba(255,255,255,0.3);
+        }
+        .category-item.selected::before { opacity: 1; }
+        .btn:hover:not(:disabled) { transform: translateY(-3px); box-shadow: 0 6px 20px rgba(0,0,0,0.25); }
+        .close-report-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 2.5rem;
+            color: #fff;
+            text-decoration: none;
+            opacity: 0.7;
+            transition: all 0.3s ease;
+        }
+        .close-report-btn:hover {
+            opacity: 1;
+            transform: rotate(90deg);
+        }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-container">
+            <a href="/dashboard.php" class="logo-container"><img src="{% static 'images/logo.png' %}" alt="AkŞehir Logo" class="logo"><span class="project-name">AkŞehir</span></a>
+            <nav class="main-nav">
+                 <ul>
+                    <li><a href="/dashboard.php">Ana Sayfa</a></li>
+                    <li><a href="/rapor-et.php" class="active">Rapor Et</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <main>
+        <div class="report-container glass-card">
+            <a href="/dashboard.php" class="close-report-btn" title="Kapat">&times;</a>
+            <form id="categoryForm" action="/rapor-et.php" method="POST">
+                {% csrf_token %}
+                <div class="step-header">
+                    <h2 class="step-title">1. Adım: Kategori Seçimi</h2>
+                    <p class="step-description">Gördüğünüz sorunu en iyi anlatan kategoriyi seçin.</p>
+                </div>
+                <input type="hidden" name="category" id="selectedCategoryInput" required>
+                <div class="category-grid">
+                    <div class="category-item" data-category="Çöp ve Atık"><i class="fas fa-trash"></i><span>Çöp ve Atık</span></div>
+                    <div class="category-item" data-category="Bozuk Yol / Kaldırım"><i class="fas fa-road"></i><span>Bozuk Yol</span></div>
+                    <div class="category-item" data-category="Park ve Yeşil Alan"><i class="fas fa-leaf"></i><span>Park / Yeşil Alan</span></div>
+                    <div class="category-item" data-category="Aydınlatma Sorunu"><i class="fas fa-lightbulb"></i><span>Aydınlatma</span></div>
+                    <div class="category-item" data-category="Su Kaçağı / Sel"><i class="fas fa-tint"></i><span>Su Sorunları</span></div>
+                    <div class="category-item" data-category="Trafik İşaretleri"><i class="fas fa-traffic-light"></i><span>Trafik İşaretleri</span></div>
+                    <div class="category-item" data-category="Gürültü Kirliliği"><i class="fas fa-volume-up"></i><span>Gürültü</span></div>
+                    <div class="category-item" data-category="Terkedilmiş Araç"><i class="fas fa-car-crash"></i><span>Terkedilmiş Araç</span></div>
+                    <div class="category-item" data-category="Diğer"><i class="fas fa-exclamation-triangle"></i><span>Diğer</span></div>
+                </div>
+                <div class="step-actions" style="justify-content: flex-end;">
+                    <button type="submit" id="goToStep2" class="btn" disabled>Devam Et <i class="fas fa-arrow-right"></i></button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const form = document.getElementById('categoryForm');
+        const categoryInput = document.getElementById('selectedCategoryInput');
+        const categoryItems = document.querySelectorAll('.category-item');
+        const submitBtn = document.getElementById('goToStep2');
+
+        categoryItems.forEach(item => {
+            item.addEventListener('click', () => {
+                const category = item.dataset.category;
+                categoryInput.value = category;
+                
+                categoryItems.forEach(el => el.classList.remove('selected'));
+                item.classList.add('selected');
+                
+                submitBtn.disabled = false;
+            });
+        });
+        
+        form.addEventListener('submit', (e) => {
+            if (!categoryInput.value) {
+                e.preventDefault();
+                alert('Lütfen bir kategori seçin.');
+            }
+        });
+    });
+    </script>
+</body>
+</html>

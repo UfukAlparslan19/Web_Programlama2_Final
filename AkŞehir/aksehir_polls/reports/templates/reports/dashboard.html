@@ -1,0 +1,393 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AkŞehir - Kontrol Paneli</title>
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-container"><img src="{% static 'images/logo.png' %}" alt="AkŞehir Logo" class="logo"><span class="project-name">AkŞehir</span></div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="#" data-page="home-page" class="active">Ana Sayfa</a></li>
+                    <li><a href="#" data-page="reports-page">Raporlarım</a></li>
+                    <li><a href="#" data-page="polls-page">Anketler</a></li>
+                    <li><a href="#" data-page="rewards-page">Ödüller</a></li>
+                    <li><a href="#" data-page="about-page">Hakkımızda</a></li>
+                    <li><a href="#" data-page="faq-page">S.S.S.</a></li>
+                </ul>
+            </nav>
+            <div class="user-menu">
+                <a href="{% url 'report_step1' %}" class="btn btn-report">Rapor Et</a>
+                <div class="user-actions">
+                    <div class="user-info"><i class="fas fa-user-circle user-icon"></i><span class="username">{{ username }}</span><i class="fas fa-chevron-down"></i></div>
+                    <ul class="user-dropdown glass-card">
+                        <li><a href="#"><i class="fas fa-user-edit"></i> Profilim</a></li>
+                        <li><div class="divider"></div></li>
+                        <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Çıkış Yap</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main id="home-page" class="page-content"><div class="container"><h2 class="page-title">Hoş Geldin, {{ username }}!</h2><p class="page-subtitle">Şehrimize katkıların bir bakışta.</p><div class="stats-grid"><div class="stat-card glass-card"><i class="fas fa-trophy"></i><h3>Toplam Puan</h3><p id="stat-total-points">0</p></div><div class="stat-card glass-card"><i class="fas fa-bullhorn"></i><h3>Toplam Rapor</h3><p id="stat-total-reports">0</p></div><div class="stat-card glass-card"><i class="fas fa-check-circle"></i><h3>Çözülen Rapor</h3><p id="stat-resolved-reports">0</p></div><div class="stat-card glass-card"><i class="fas fa-hourglass-half"></i><h3>Bekleyen Rapor</h3><p id="stat-pending-reports">0</p></div></div></div></main>
+    <main id="reports-page" class="page-content" style="display: none;"><div class="container"><h2 class="page-title">Raporlarım</h2><p class="page-subtitle">Oluşturduğunuz ve takip ettiğiniz tüm raporlar.</p><div id="reports-grid" class="reports-grid"></div></div></main>
+    <main id="rewards-page" class="page-content" style="display: none;"><div class="container"><h2 class="page-title">Ödül Kataloğu</h2><div class="rewards-summary glass-card"><i class="fas fa-trophy"></i><h3>Toplam Puanınız</h3><p id="rewards-total-points">0</p></div><div class="rewards-grid"><div class="reward-card glass-card"><i class="fas fa-shopping-bag"></i> <h5>Bez Çanta</h5> <p>Plastik poşet kullanımını azaltmak için.</p><div class="reward-footer"><span>500 Puan</span><button class="btn btn-secondary" disabled>Yetersiz Puan</button></div></div><div class="reward-card glass-card"><i class="fas fa-coffee"></i><h5>Kahve İndirimi</h5><p>Favori kahvenizi %20 indirimle yudumlayın.</p><div class="reward-footer"><span>750 Puan</span><button class="btn btn-secondary" disabled>Yetersiz Puan</button></div></div><div class="reward-card glass-card"><i class="fas fa-tree"></i><h5>Fidan Bağışı</h5><p>Adınıza bir fidan dikilsin.</p><div class="reward-footer"><span>1000 Puan</span><button class="btn btn-secondary" disabled>Yetersiz Puan</button></div></div><div class="reward-card glass-card"><i class="fas fa-ticket-alt"></i><h5>Sinema Bileti</h5><p>Anlaşmalı sinemalarda geçerli bilet.</p><div class="reward-footer"><span>1200 Puan</span><button class="btn btn-secondary" disabled>Yetersiz Puan</button></div></div></div></div></main>
+    <main id="about-page" class="page-content" style="display: none;"><div class="container centered-container"><div class="content-card glass-card"><i class="fas fa-leaf logo-icon"></i><h2>Biz Kimiz?</h2><p>AkŞehir, şehirlerimizi daha temiz, daha yeşil ve daha yaşanabilir hale getirme misyonuyla yola çıkmış bir teknoloji projesidir.</p><div class="separator"></div><h2 class="h-vision">Vizyonumuz</h2><p>Her bireyin yaşadığı çevrenin bir koruyucusu olduğu, teknolojinin doğayla uyum içinde çalıştığı sürdürülebilir akıllı şehirler yaratmak.</p></div></div></main>
+    <main id="faq-page" class="page-content" style="display: none;"><div class="container centered-container"><div class="content-card faq-card glass-card"><h2 class="page-title">Sıkça Sorulan Sorular</h2><div class="accordion"><div class="accordion-item"><button class="accordion-header">AkŞehir uygulaması nedir?<i class="fas fa-chevron-down"></i></button><div class="accordion-content"><p>AkŞehir, gördüğünüz çevresel sorunların fotoğrafını çekip bildirmenizi sağlayan bir platformdur.</p></div></div><div class="accordion-item"><button class="accordion-header">Rapor gönderdiğimde ne oluyor?<i class="fas fa-chevron-down"></i></button><div class="accordion-content"><p>Raporunuz sisteme kaydedilir, yapay zeka tarafından analiz edilir ve ilgili birimlere iletilir.</p></div></div><div class="accordion-item"><button class="accordion-header">Puan ve ödül sistemi nasıl çalışır?<i class="fas fa-chevron-down"></i></button><div class="accordion-content"><p>Her geçerli rapor için puan kazanırsınız ve bu puanlarla ödül kataloğundan faydalanabilirsiniz.</p></div></div></div></div></div></main>
+    <main id="polls-page" class="page-content" style="display: none;"><div class="container"><h2 class="page-title">Şehir Anketleri</h2><p class="page-subtitle">AkŞehir'in geleceğini birlikte şekillendirelim. Fikirleriniz bizim için değerli!</p><div id="polls-grid" class="polls-grid"><p class="loading-text">Anketler yükleniyor...</p></div></div></main>
+    
+    <div id="detail-modal" class="modal-overlay">
+        <div class="modal-content glass-card detail-modal-content">
+            <button id="close-detail-modal-btn" class="close-btn">&times;</button>
+            <img id="detail-modal-img" src="" alt="Rapor Detay Resmi" class="detail-modal-img">
+            <div class="detail-modal-body">
+                <h3 id="detail-modal-category"></h3>
+                <div class="meta-grid">
+                    <div class="meta-item">
+                        <small>Tarih</small>
+                        <p id="detail-modal-date"></p>
+                    </div>
+                    <div class="meta-item">
+                        <small>Durum</small>
+                        <div id="detail-modal-status"></div>
+                    </div>
+                    <div class="meta-item">
+                        <small>Risk</small>
+                        <p id="detail-modal-risk"></p>
+                    </div>
+                </div>
+                <div class="description-block">
+                    <h4><i class="fas fa-map-marker-alt"></i> Konum</h4>
+                    <p id="detail-modal-location"></p>
+                    <div id="detail-map" class="detail-map-container"></div>
+                </div>
+                <div class="description-block">
+                    <h4><i class="fas fa-brain"></i> Yapay Zeka Tespiti</h4>
+                    <p id="detail-modal-desc"></p>
+                </div>
+            </div>
+            <div class="detail-modal-footer">
+                <button id="detail-modal-delete-btn" data-id="" class="btn btn-delete"><i class="fas fa-trash"></i> Raporu Sil</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const currentUsername = "{{ username }}";
+        let userReports = [];
+        let detailMap = null, detailMarker = null;
+    
+        const navLinks = document.querySelectorAll('.main-nav a'), 
+              contentPages = document.querySelectorAll('.page-content'), 
+              userInfo = document.querySelector('.user-info'), 
+              userDropdown = document.querySelector('.user-dropdown'), 
+              reportsGrid = document.getElementById('reports-grid'), 
+              logoutLink = document.getElementById('logout-link');
+        
+        const pages = {};
+        navLinks.forEach(link => { 
+            const pageId = link.dataset.page; 
+            if (pageId && document.getElementById(pageId)) {
+                pages[pageId] = document.getElementById(pageId); 
+            }
+        });
+    
+        const switchPage = (pageId) => {
+            if (!pages[pageId]) return;
+            contentPages.forEach(p => p.style.display = 'none');
+            pages[pageId].style.display = 'block';
+            navLinks.forEach(l => l.classList.remove('active'));
+            const activeLink = document.querySelector(`.main-nav a[data-page="${pageId}"]`);
+            if (activeLink) activeLink.classList.add('active');
+            if (pageId === 'home-page' || pageId === 'rewards-page') loadDashboardStats();
+            if (pageId === 'reports-page') loadUserReports();
+            if (pageId === 'polls-page') loadPolls();
+        };
+    
+        navLinks.forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                const pageId = link.dataset.page;
+                window.location.hash = pageId.replace('-page', '');
+                switchPage(pageId);
+            });
+        });
+        
+        userInfo.addEventListener('click', (e) => { 
+            e.stopPropagation(); 
+            const isVisible = userDropdown.style.display === 'block'; 
+            userDropdown.style.display = isVisible ? 'none' : 'block'; 
+            userInfo.querySelector('.fa-chevron-down').style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)'; 
+        });
+        document.addEventListener('click', () => { 
+            userDropdown.style.display = 'none'; 
+            if (userInfo) userInfo.querySelector('.fa-chevron-down').style.transform = 'rotate(0deg)'; 
+        });
+        document.querySelectorAll('.accordion-header').forEach(h => { h.addEventListener('click', () => { const i = h.parentElement; if (i.classList.contains('active')) { i.classList.remove('active'); i.querySelector('.accordion-content').style.maxHeight = null; } else { document.querySelectorAll('.accordion-item.active').forEach(j => { j.classList.remove('active'); j.querySelector('.accordion-content').style.maxHeight = null; }); i.classList.add('active'); i.querySelector('.accordion-content').style.maxHeight = i.querySelector('.accordion-content').scrollHeight + "px"; } }); });
+    
+        const apiRequest = async (url, options) => { 
+            try { 
+                const res = await fetch(url, options); 
+                const data = await res.json(); 
+                if (!res.ok) throw new Error(data.error || 'Bilinmeyen bir sunucu hatası.'); 
+                return data; 
+            } catch (e) { 
+                console.error(e); 
+                alert('Hata: ' + e.message); 
+                return null; 
+            }
+        };
+
+        const loadDashboardStats = async () => { 
+            const stats = await apiRequest('api/get_user_stats.php'); 
+            if(stats) { 
+                document.getElementById('stat-total-points').textContent = stats.total_points || 0; 
+                document.getElementById('rewards-total-points').textContent = stats.total_points || 0; 
+                document.getElementById('stat-total-reports').textContent = stats.total_reports || 0; 
+                document.getElementById('stat-resolved-reports').textContent = stats.resolved_reports || 0; 
+                document.getElementById('stat-pending-reports').textContent = stats.pending_reports || 0; 
+            }
+        };
+
+        const loadUserReports = async () => { 
+            if(!reportsGrid) return; 
+            reportsGrid.innerHTML = `<p>Raporlar yükleniyor...</p>`; 
+            const reports = await apiRequest('api/get_reports.php'); 
+            userReports = reports || []; 
+            reportsGrid.innerHTML = ''; 
+            if (userReports.length === 0) { 
+                reportsGrid.innerHTML = '<p>Henüz raporunuz yok.</p>'; 
+                return; 
+            } 
+            userReports.forEach(report => { 
+                const status = report.status || 'beklemede';
+                const statusClass = `status-${status.replace(/\s+/g, '_')}`;
+                const riskLevel = report.ai_risk_level || 'Belirsiz';
+                const riskClass = `risk-${riskLevel.split(' ')[0].toLowerCase()}`;
+
+                reportsGrid.innerHTML += `<div class="report-card glass-card" data-report-id="${report.id}" data-risk="${riskLevel}">
+                                              <div class="report-card-img">
+                                                  <img src="${report.image_path}" alt="Rapor">
+                                                  <span class="badge-category">${report.category}</span>
+                                                  <span class="badge-status ${statusClass}">${status}</span>
+                                              </div>
+                                              <div class="report-card-content">
+                                                  <p><i class="fas fa-map-marker-alt"></i> <span class="location-text">${report.address || 'Adres belirtilmedi'}</span></p>
+                                                  <div class="report-card-footer">
+                                                      <span>${new Date(report.created_at).toLocaleDateString('tr-TR')}</span>
+                                                      <span class="badge-risk ${riskClass}">${riskLevel}</span>
+                                                  </div>
+                                              </div>
+                                          </div>`; 
+            }); 
+        };
+
+        const loadPolls = async () => {
+            const pollsGrid = document.getElementById('polls-grid');
+            if(!pollsGrid) return;
+            pollsGrid.innerHTML = `<p class="loading-text">Anketler yükleniyor...</p>`;
+            
+            const data = await apiRequest(`api/polls/?username=${encodeURIComponent(currentUsername)}`);
+            if(!data || !data.success) {
+                pollsGrid.innerHTML = `<p class="loading-text">Anketler yüklenirken bir hata oluştu. Lütfen Django sunucusunun çalıştığından emin olun.</p>`;
+                return;
+            }
+            
+            pollsGrid.innerHTML = '';
+            const polls = data.polls || [];
+            if(polls.length === 0) {
+                pollsGrid.innerHTML = '<p class="loading-text">Şu anda aktif bir anket bulunmuyor.</p>';
+                return;
+            }
+            
+            polls.forEach(poll => {
+                const isExpired = poll.is_expired;
+                const userVoted = poll.user_voted;
+                const totalVotes = poll.total_votes;
+                
+                let badgeHTML = '';
+                if(isExpired) {
+                    badgeHTML = '<span class="poll-badge expired">Süresi Doldu</span>';
+                } else {
+                    badgeHTML = '<span class="poll-badge active">Aktif</span>';
+                }
+                
+                let choicesHTML = '';
+                poll.choices.forEach(choice => {
+                    const votes = choice.votes_count;
+                    const percent = totalVotes > 0 ? Math.round((votes / totalVotes) * 100) : 0;
+                    
+                    if(isExpired || userVoted) {
+                        // Sonuç gösterim modu
+                        const isUserChoice = choice.id === poll.user_choice_id;
+                        const choiceClass = isUserChoice ? 'choice-item voted-choice' : 'choice-item';
+                        choicesHTML += `
+                            <div class="${choiceClass}">
+                                <div class="result-bar" style="width: ${percent}%"></div>
+                                <span class="choice-text">${choice.choice_text}</span>
+                                <div class="result-info">
+                                    <span class="choice-percent">%${percent}</span>
+                                    <span class="choice-votes">(${votes} Oy)</span>
+                                </div>
+                            </div>
+                        `;
+                    } else {
+                        // Oy verme modu
+                        choicesHTML += `
+                            <div class="choice-item active-choice" onclick="castVote(${poll.id}, ${choice.id})">
+                                <span class="choice-text">${choice.choice_text}</span>
+                            </div>
+                        `;
+                    }
+                });
+                
+                const endDateFormatted = new Date(poll.end_date).toLocaleDateString('tr-TR');
+                
+                pollsGrid.innerHTML += `
+                    <div class="poll-card glass-card">
+                        <div class="poll-header">
+                            <h3 class="poll-question">${poll.question_text}</h3>
+                            ${badgeHTML}
+                        </div>
+                        <div class="choice-list">
+                            ${choicesHTML}
+                        </div>
+                        <div class="poll-footer">
+                            <span class="poll-meta-item"><i class="fas fa-users"></i> ${totalVotes} Katılımcı</span>
+                            <span class="poll-meta-item"><i class="fas fa-calendar-alt"></i> Son Katılım: ${endDateFormatted}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        };
+
+        window.castVote = async (pollId, choiceId) => {
+            if(!confirm("Bu seçeneğe oy vermek istediğinizden emin misiniz? (Oyunuz değiştirilemez)")) {
+                return;
+            }
+            
+            try {
+                const response = await fetch(`api/polls/${pollId}/vote/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        choice_id: choiceId,
+                        username: currentUsername
+                    })
+                });
+                
+                const data = await response.json();
+                if(data.success) {
+                    alert("Oyunuz başarıyla kaydedildi!");
+                    loadPolls(); // Sonuçları görmek için anketleri yeniden yükle
+                } else {
+                    alert("Hata: " + (data.error || "Oy kullanılamadı."));
+                }
+            } catch (e) {
+                console.error(e);
+                alert("Bağlantı hatası: Django sunucusu çalışmıyor olabilir.");
+            }
+        };
+
+        logoutLink.addEventListener('click', async e => { 
+            e.preventDefault(); 
+            await fetch('api/logout.php', { method: 'POST' }); 
+            window.location.href = '/'; 
+        });
+        
+        const detailModal = document.getElementById('detail-modal');
+        reportsGrid.addEventListener('click', e => { 
+            const card = e.target.closest('.report-card'); 
+            if(card) { 
+                const report = userReports.find(r => r.id == card.dataset.reportId); 
+                if(report) showReportDetail(report); 
+            } 
+        });
+        
+        const showReportDetail = (report) => {
+            const status = report.status || 'beklemede';
+            const statusClass = `status-${status.replace(/\s+/g, '_')}`;
+
+            const riskLevel = report.ai_risk_level || 'Belirsiz';
+            const riskClass = `risk-${riskLevel.split(' ')[0].toLowerCase()}`;
+
+            document.getElementById('detail-modal-img').src = report.image_path;
+            document.getElementById('detail-modal-category').textContent = report.category;
+            document.getElementById('detail-modal-date').textContent = new Date(report.created_at).toLocaleString('tr-TR');
+            document.getElementById('detail-modal-status').innerHTML = `<span class="badge-status ${statusClass}">${status}</span>`;
+            document.getElementById('detail-modal-risk').innerHTML = `<span class="badge-risk ${riskClass}">${riskLevel}</span>`;
+            document.getElementById('detail-modal-desc').textContent = report.ai_description || "Yapay zeka analizi bulunmuyor.";
+            document.getElementById('detail-modal-location').textContent = report.address || 'Adres bilgisi yok.';
+            document.getElementById('detail-modal-delete-btn').dataset.id = report.id;
+            
+            detailModal.classList.add('visible');
+
+            const lat = report.latitude;
+            const lon = report.longitude;
+
+            if (lat && lon) {
+                document.getElementById('detail-map').style.display = 'block';
+                if (!detailMap) {
+                    detailMap = L.map('detail-map');
+                     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(detailMap);
+                }
+                
+                detailMap.setView([lat, lon], 16);
+
+                if (!detailMarker) {
+                    detailMarker = L.marker([lat, lon]).addTo(detailMap);
+                } else {
+                    detailMarker.setLatLng([lat, lon]);
+                }
+                setTimeout(() => {
+                    detailMap.invalidateSize();
+                }, 10);
+            } else {
+                 document.getElementById('detail-map').style.display = 'none';
+            }
+        };
+    
+        document.getElementById('close-detail-modal-btn').addEventListener('click', () => detailModal.classList.remove('visible'));
+        
+        document.getElementById('detail-modal-delete-btn').addEventListener('click', async e => { 
+            const reportId = e.target.dataset.id; 
+            if(confirm(`${reportId} numaralı raporu silmek istediğinizden emin misiniz?`)) { 
+                const result = await apiRequest('api/delete_report.php', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({ report_id: reportId }) }); 
+                if (result && result.success) { 
+                    alert('Rapor başarıyla silindi.'); 
+                    detailModal.classList.remove('visible');
+                    loadUserReports(); 
+                    loadDashboardStats();
+                } else { 
+                    alert('Rapor silinirken bir hata oluştu: ' + (result ? result.error : 'Bilinmeyen Hata'));
+                } 
+            } 
+        });
+    
+        const handleHashChange = () => {
+            const hash = window.location.hash.substring(1);
+            const pageId = hash ? `${hash}-page` : 'home-page';
+            switchPage(pageId);
+        };
+    
+        handleHashChange();
+        window.addEventListener('hashchange', handleHashChange);
+    });
+    </script>
+</body>
+</html>

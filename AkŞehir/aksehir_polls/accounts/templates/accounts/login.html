@@ -1,0 +1,70 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AkŞehir - Giriş Yap</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="form-container" id="login-container">
+            <div class="form-header">
+                <img src="{% static 'images/logo.png' %}" alt="AkŞehir Logo" class="logo">
+                <h2>Hoş Geldiniz</h2>
+                <p>Lütfen bilgilerinizi kullanarak giriş yapın</p>
+            </div>
+            <form id="login-form">
+                <div class="input-group">
+                    <label for="login-email">E-posta</label>
+                    <input type="email" id="login-email" name="email" required>
+                </div>
+                <div class="input-group">
+                    <label for="login-password">Şifre</label>
+                    <input type="password" id="login-password" name="password" required>
+                </div>
+                <button type="submit" class="btn">Giriş Yap</button>
+            </form>
+            <div class="form-footer">
+                <p>Hesabınız yok mu? <a href="#" id="show-register">Kayıt Olun</a></p>
+            </div>
+        </div>
+
+        <div class="form-container" id="register-container" style="display:none;">
+            <div class="form-header">
+                <img src="{% static 'images/logo.png' %}" alt="AkŞehir Logo" class="logo">
+                <h2>Hesap Oluşturun</h2>
+                <p>Şehrinize yardımcı olmak için bize katılın</p>
+            </div>
+            <form id="register-form">
+                 <div class="input-group">
+                    <label for="register-username">Kullanıcı Adı</label>
+                    <input type="text" id="register-username" name="username" required>
+                </div>
+                <div class="input-group">
+                    <label for="register-email">E-posta</label>
+                    <input type="email" id="register-email" name="email" required>
+                </div>
+                <div class="input-group">
+                    <label for="register-password">Şifre</label>
+                    <input type="password" id="register-password" name="password" required>
+                </div>
+                <button type="submit" class="btn">Kayıt Ol</button>
+            </form>
+            <div class="form-footer">
+                <p>Zaten bir hesabınız var mı? <a href="#" id="show-login">Giriş Yapın</a></p>
+            </div>
+        </div>
+        <div class="info-panel">
+            <h1>ŞEHRİN <span class="highlight">GÖZÜ</span> OL.</h1>
+            <p>Çevresel sorunları yapay zeka ile bildir, çözümün bir parçası ol. Geleceğin akıllı şehri seninle başlar.</p>
+        </div>
+    </div>
+    <script src="{% static 'js/app.js' %}"></script>
+</body>
+</html>

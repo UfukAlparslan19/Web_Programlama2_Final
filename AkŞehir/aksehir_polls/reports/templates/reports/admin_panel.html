@@ -1,0 +1,599 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AkŞehir - Yönetim Paneli</title>
+    <link rel="stylesheet" href="{% static 'css/dashboard.css' %}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <style>
+        .admin-tab-content { animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .poll-admin-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            border-top: 1px solid var(--border-color);
+            padding-top: 15px;
+        }
+        .btn-small-danger {
+            background-color: var(--status-reddedildi);
+            color: #fff;
+            padding: 6px 12px;
+            font-size: 0.8rem;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+            font-weight: 600;
+        }
+        .btn-small-danger:hover {
+            background-color: #c0392b;
+        }
+        .choice-admin-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.9rem;
+            padding: 8px 12px;
+            background: rgba(255,255,255,0.02);
+            border-radius: 6px;
+            margin-bottom: 5px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .choice-admin-votes {
+            font-weight: 700;
+            color: var(--accent-green);
+        }
+        .input-choice-wrapper {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+        .btn-remove-choice-input {
+            background: none;
+            border: none;
+            color: var(--status-reddedildi);
+            cursor: pointer;
+            font-size: 1.1rem;
+        }
+    </style>
+</head>
+<body>
+    <header class="main-header">
+        <div class="header-container">
+            <div class="logo-container"><img src="{% static 'images/logo.png' %}" alt="AkŞehir Logo" class="logo"><span class="project-name">AkŞehir</span></div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="#" data-page="reports-page" class="active">İhbar Yönetimi</a></li>
+                    <li><a href="#" data-page="polls-page">Anket Yönetimi</a></li>
+                </ul>
+            </nav>
+            <div class="user-menu">
+                <div class="user-actions">
+                    <div class="user-info"><i class="fas fa-user-shield user-icon"></i><span class="username">{{ username }} (Admin)</span><i class="fas fa-chevron-down"></i></div>
+                    <ul class="user-dropdown glass-card">
+                        <li><a href="#"><i class="fas fa-user-edit"></i> Profilim</a></li>
+                        <li><div class="divider"></div></li>
+                        <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Çıkış Yap</a></li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="page-content">
+        <div class="container">
+            <!-- İHBAR YÖNETİMİ SEKME İÇERİĞİ -->
+            <div id="reports-page" class="admin-tab-content">
+                <h2 class="page-title">İhbar Yönetimi</h2>
+                <p class="page-subtitle">Sistemdeki tüm çevre raporlarını buradan onaylayabilir veya yönetebilirsiniz.</p>
+                
+                <div id="admin-reports-grid" class="reports-grid">
+                    <p>Raporlar yükleniyor...</p>
+                </div>
+            </div>
+
+            <!-- ANKET YÖNETİMİ SEKME İÇERİĞİ -->
+            <div id="polls-page" class="admin-tab-content" style="display: none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 15px;">
+                    <div>
+                        <h2 class="page-title">Anket Yönetimi</h2>
+                        <p class="page-subtitle">Vatandaşların fikirlerini almak için yeni anketler oluşturun ve oyları izleyin.</p>
+                    </div>
+                    <button class="btn btn-report" id="btn-new-poll" style="margin-right: 0;"><i class="fas fa-plus"></i> Yeni Anket Oluştur</button>
+                </div>
+                
+                <div id="admin-polls-grid" class="polls-grid">
+                    <p class="loading-text">Anketler yükleniyor...</p>
+                </div>
+            </div>
+
+        </div>
+    </main>
+    
+    <!-- İHBAR DETAY MODAL -->
+    <div id="detail-modal" class="modal-overlay">
+        <div class="modal-content glass-card detail-modal-content">
+            <button id="close-detail-modal-btn" class="close-btn">&times;</button>
+            <img id="detail-modal-img" src="" alt="Rapor Detay Resmi" class="detail-modal-img">
+            <div class="detail-modal-body">
+                <h3 id="detail-modal-category"></h3>
+                <div class="meta-grid">
+                    <div class="meta-item">
+                        <small>Tarih</small>
+                        <p id="detail-modal-date"></p>
+                    </div>
+                    <div class="meta-item">
+                        <small>Durum</small>
+                        <div id="detail-modal-status"></div>
+                    </div>
+                    <div class="meta-item">
+                        <small>Risk</small>
+                        <p id="detail-modal-risk"></p>
+                    </div>
+                </div>
+                <div class="description-block">
+                    <h4><i class="fas fa-user"></i> Raporlayan Kullanıcı</h4>
+                    <p id="detail-modal-username"></p>
+                </div>
+                <div class="description-block">
+                    <h4><i class="fas fa-map-marker-alt"></i> Konum</h4>
+                    <p id="detail-modal-location"></p>
+                    <div id="detail-map" class="detail-map-container"></div>
+                </div>
+                <div class="description-block">
+                    <h4><i class="fas fa-brain"></i> Yapay Zeka Tespiti</h4>
+                    <p id="detail-modal-desc"></p>
+                </div>
+                 <div class="description-block">
+                    <h4><i class="fas fa-pencil-alt"></i> Kullanıcı Notları</h4>
+                    <p id="detail-modal-user-notes"></p>
+                </div>
+            </div>
+            <div id="admin-modal-footer" class="detail-modal-footer">
+                <button id="admin-action-approve" class="btn btn-approve">Onayla</button>
+                <button id="admin-action-resolve" class="btn btn-resolve">Çözüldü Olarak İşaretle</button>
+                <button id="admin-action-reject" class="btn btn-delete">Reddet</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- YENİ ANKET MODAL -->
+    <div id="new-poll-modal" class="modal-overlay">
+        <div class="modal-content glass-card" style="max-width: 600px; padding: 35px; width: 95%;">
+            <button id="close-new-poll-modal-btn" class="close-btn">&times;</button>
+            <h3 style="margin-bottom: 25px; font-size: 1.6rem; color: #fff; display: flex; align-items: center; gap: 10px;"><i class="fas fa-poll-h" style="color: var(--accent-green);"></i> Yeni Anket Oluştur</h3>
+            <form id="new-poll-form">
+                <div class="description-block" style="margin-top: 0; margin-bottom: 20px;">
+                    <label for="poll-question" style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.9rem;">Anket Sorusu</label>
+                    <input type="text" id="poll-question" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: #fff; font-family: inherit;" placeholder="Örn: Şehrimize en çok hangi alanda yeşil alan yatırımı yapılmalı?">
+                </div>
+                <div class="description-block" style="margin-bottom: 20px;">
+                    <label for="poll-end-date" style="display: block; margin-bottom: 8px; color: var(--text-secondary); font-size: 0.9rem;">Son Katılım Tarihi</label>
+                    <input type="date" id="poll-end-date" required style="width: 100%; padding: 12px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: #fff; font-family: inherit;">
+                </div>
+                
+                <div class="description-block" style="margin-bottom: 25px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                        <span style="color: var(--text-secondary); font-size: 0.9rem;">Anket Seçenekleri (En az 2)</span>
+                        <button type="button" class="btn btn-secondary" id="btn-add-choice-input" style="padding: 5px 12px; font-size: 0.8rem; font-weight: 600;"><i class="fas fa-plus"></i> Seçenek Ekle</button>
+                    </div>
+                    <div id="choices-inputs-container" style="display: flex; flex-direction: column; gap: 10px;">
+                        <div class="input-choice-wrapper">
+                            <input type="text" class="poll-choice-input" required style="width: 100%; padding: 11px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: #fff; font-family: inherit;" placeholder="Seçenek 1">
+                        </div>
+                        <div class="input-choice-wrapper">
+                            <input type="text" class="poll-choice-input" required style="width: 100%; padding: 11px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: #fff; font-family: inherit;" placeholder="Seçenek 2">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="detail-modal-footer" style="padding: 15px 0 0 0; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 10px; border-radius: 0;">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-poll">İptal</button>
+                    <button type="submit" class="btn btn-report" style="margin-right: 0; background-color: var(--accent-green);">Anketi Yayınla <i class="fas fa-paper-plane"></i></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    document.addEventListener('DOMContentLoaded', () => {
+        let allReports = [];
+        let detailMap = null, detailMarker = null;
+
+        const reportsGrid = document.getElementById('admin-reports-grid');
+        const logoutLink = document.getElementById('logout-link');
+        const userDropdown = document.querySelector('.user-dropdown');
+        const userInfo = document.querySelector('.user-info');
+        
+        // Sekmeler ve Navigasyon Mantığı
+        const navLinks = document.querySelectorAll('.main-nav a');
+        const tabContents = document.querySelectorAll('.admin-tab-content');
+        
+        navLinks.forEach(link => {
+            link.addEventListener('click', e => {
+                e.preventDefault();
+                const pageId = link.dataset.page;
+                if (!pageId) return;
+                
+                tabContents.forEach(content => content.style.display = 'none');
+                document.getElementById(pageId).style.display = 'block';
+                
+                navLinks.forEach(l => l.classList.remove('active'));
+                link.classList.add('active');
+                
+                if (pageId === 'reports-page') loadAdminReports();
+                if (pageId === 'polls-page') loadAdminPolls();
+            });
+        });
+
+        // ==========================================
+        // İHBAR YÖNETİMİ İŞLEMLERİ
+        // ==========================================
+        const loadAdminReports = async () => {
+            reportsGrid.innerHTML = '<p>Raporlar yükleniyor...</p>';
+            const reports = await apiRequest('api/get_reports.php');
+            allReports = reports || [];
+            reportsGrid.innerHTML = '';
+
+            if (allReports.length === 0) {
+                reportsGrid.innerHTML = '<p>Henüz rapor bulunmamaktadır.</p>';
+                return;
+            }
+
+            allReports.forEach(report => {
+                const status = report.status || 'beklemede';
+                const statusClass = `status-${status.replace(/\s+/g, '_')}`;
+                const riskLevel = report.ai_risk_level || 'Belirsiz';
+                const riskClass = `risk-${riskLevel.split(' ')[0].toLowerCase()}`;
+
+                const card = document.createElement('div');
+                card.className = `report-card glass-card`;
+                card.dataset.reportId = report.id;
+                
+                card.innerHTML = `
+                    <div class="report-card-img-container">
+                        <img src="${report.image_path}" alt="Rapor" class="report-card-img">
+                        <span class="badge-category">${report.category}</span>
+                        <span class="badge-status ${statusClass}">${status}</span>
+                    </div>
+                    <div class="report-card-content">
+                        <p title="${report.address}"><i class="fas fa-map-marker-alt"></i> <span class="location-text">${report.address || 'Adres belirtilmedi'}</span></p>
+                        <div class="report-card-user">
+                           <i class="fas fa-user"></i> <span>${report.username}</span>
+                        </div>
+                        <div class="report-card-footer">
+                            <span>${new Date(report.created_at).toLocaleDateString('tr-TR')}</span>
+                            <span class="badge-risk ${riskClass}">${riskLevel}</span>
+                        </div>
+                    </div>
+                    <div class="admin-card-actions">
+                        <button class="btn btn-small btn-approve" data-id="${report.id}" data-status="onaylandı">Onayla</button>
+                        <button class="btn btn-small btn-resolve" data-id="${report.id}" data-status="çözüldü">Çözüldü</button>
+                        <button class="btn btn-small btn-reject" data-id="${report.id}" data-status="reddedildi">Reddet</button>
+                    </div>
+                `;
+                reportsGrid.appendChild(card);
+            });
+        };
+
+        const apiRequest = async (url, options) => {
+            const res = await fetch(url, options);
+            const data = await res.json();
+            if (!res.ok) {
+                throw new Error(data.error || 'Bilinmeyen bir sunucu hatası.');
+            }
+            return data;
+        };
+
+        const detailModal = document.getElementById('detail-modal');
+        const showReportDetail = (report) => {
+            const status = report.status || 'beklemede';
+            const statusClass = `badge-status status-${status.replace(/\s+/g, '_')}`;
+            const riskLevel = report.ai_risk_level || 'Belirsiz';
+            const riskClass = `badge-risk risk-${riskLevel.split(' ')[0].toLowerCase()}`;
+
+            document.getElementById('detail-modal-img').src = report.image_path;
+            document.getElementById('detail-modal-category').textContent = report.category;
+            document.getElementById('detail-modal-date').textContent = new Date(report.created_at).toLocaleString('tr-TR');
+            document.getElementById('detail-modal-status').innerHTML = `<span class="${statusClass}">${status}</span>`;
+            document.getElementById('detail-modal-risk').innerHTML = `<span class="${riskClass}">${riskLevel}</span>`;
+            document.getElementById('detail-modal-username').textContent = report.username || 'Bilinmiyor';
+            document.getElementById('detail-modal-location').textContent = report.address || 'Adres bilgisi yok.';
+            document.getElementById('detail-modal-desc').textContent = report.ai_description || "Yapay zeka analizi bulunmuyor.";
+            document.getElementById('detail-modal-user-notes').textContent = report.user_notes || 'Kullanıcı notu yok.';
+            
+            document.getElementById('admin-action-approve').dataset.id = report.id;
+            document.getElementById('admin-action-resolve').dataset.id = report.id;
+            document.getElementById('admin-action-reject').dataset.id = report.id;
+            document.getElementById('admin-modal-footer').style.display = 'flex';
+
+            detailModal.classList.add('visible');
+
+            const lat = report.latitude;
+            const lon = report.longitude;
+            if (lat && lon) {
+                document.getElementById('detail-map').style.display = 'block';
+                if (!detailMap) {
+                    detailMap = L.map('detail-map');
+                    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(detailMap);
+                }
+                detailMap.setView([lat, lon], 16);
+                if (!detailMarker) {
+                    detailMarker = L.marker([lat, lon]).addTo(detailMap);
+                } else {
+                    detailMarker.setLatLng([lat, lon]);
+                }
+                setTimeout(() => detailMap.invalidateSize(), 10);
+            } else {
+                document.getElementById('detail-map').style.display = 'none';
+            }
+        };
+
+        reportsGrid.addEventListener('click', e => {
+            const actionBtn = e.target.closest('.btn-small');
+            if (actionBtn) {
+                e.stopPropagation();
+                const reportId = actionBtn.dataset.id;
+                const newStatus = actionBtn.dataset.status;
+                if (confirm(`Raporu "${newStatus}" olarak güncellemek istediğinizden emin misiniz?`)) {
+                    updateReportStatus(reportId, newStatus);
+                }
+            } else {
+                const card = e.target.closest('.report-card');
+                if (card) {
+                    const reportId = card.dataset.reportId;
+                    const report = allReports.find(r => r.id == reportId);
+                    if (report) showReportDetail(report);
+                }
+            }
+        });
+
+        document.getElementById('close-detail-modal-btn').addEventListener('click', () => detailModal.classList.remove('visible'));
+
+        const updateReportStatus = async (reportId, newStatus) => {
+            try {
+                const result = await apiRequest('api/update_report_status.php', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ report_id: reportId, status: newStatus })
+                });
+
+                if (result && result.success) {
+                    alert(`Rapor başarıyla "${newStatus}" olarak güncellendi.`);
+                    detailModal.classList.remove('visible');
+                    loadAdminReports();
+                }
+            } catch (error) {
+                alert('Hata: ' + error.message);
+            }
+        };
+
+        document.getElementById('admin-modal-footer').addEventListener('click', e => {
+            if(e.target.classList.contains('btn')) {
+                const reportId = e.target.dataset.id;
+                const newStatus = e.target.id.split('-')[2];
+                let statusText = newStatus;
+                if(newStatus === 'approve') statusText = 'onaylandı';
+                if(newStatus === 'resolve') statusText = 'çözüldü';
+                if(newStatus === 'reject') statusText = 'reddedildi';
+                
+                 if (confirm(`Raporu "${statusText}" olarak güncellemek istediğinizden emin misiniz?`)) {
+                    updateReportStatus(reportId, statusText);
+                }
+            }
+        });
+
+
+        // ==========================================
+        // ANKET YÖNETİMİ İŞLEMLERİ
+        // ==========================================
+        const adminPollsGrid = document.getElementById('admin-polls-grid');
+        const newPollModal = document.getElementById('new-poll-modal');
+        const newPollForm = document.getElementById('new-poll-form');
+        const choicesContainer = document.getElementById('choices-inputs-container');
+        
+        const loadAdminPolls = async () => {
+            adminPollsGrid.innerHTML = '<p class="loading-text">Anketler yükleniyor...</p>';
+            const data = await apiRequest('api/polls/all/');
+            adminPollsGrid.innerHTML = '';
+            
+            if(!data || !data.success) {
+                adminPollsGrid.innerHTML = '<p class="loading-text">Anketler yüklenirken hata oluştu.</p>';
+                return;
+            }
+            
+            const polls = data.polls || [];
+            if (polls.length === 0) {
+                adminPollsGrid.innerHTML = '<p class="loading-text">Henüz anket oluşturulmamış.</p>';
+                return;
+            }
+            
+            polls.forEach(poll => {
+                const isExpired = poll.is_expired;
+                const totalVotes = poll.total_votes;
+                const badgeClass = isExpired ? 'poll-badge expired' : 'poll-badge active';
+                const badgeText = isExpired ? 'Süresi Doldu' : 'Aktif';
+                
+                let choicesHTML = '';
+                poll.choices.forEach(choice => {
+                    choicesHTML += `
+                        <div class="choice-admin-item">
+                            <span>${choice.choice_text}</span>
+                            <span class="choice-admin-votes">${choice.votes_count} Oy</span>
+                        </div>
+                    `;
+                });
+                
+                const card = document.createElement('div');
+                card.className = 'poll-card glass-card';
+                card.innerHTML = `
+                    <div class="poll-header">
+                        <h3 class="poll-question">${poll.question_text}</h3>
+                        <span class="${badgeClass}">${badgeText}</span>
+                    </div>
+                    <div class="choice-list" style="margin-bottom: 10px;">
+                        ${choicesHTML}
+                    </div>
+                    <div class="poll-footer" style="flex-direction: column; align-items: flex-start; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between; width: 100%; font-size: 0.8rem; color: var(--text-secondary);">
+                            <span><i class="fas fa-users"></i> ${totalVotes} Toplam Katılım</span>
+                            <span><i class="fas fa-calendar-alt"></i> Bitiş: ${new Date(poll.end_date).toLocaleDateString('tr-TR')}</span>
+                        </div>
+                        <div class="poll-admin-actions">
+                            <button class="btn-small-danger btn-delete-poll" data-id="${poll.id}"><i class="fas fa-trash"></i> Anketi Sil</button>
+                        </div>
+                    </div>
+                `;
+                adminPollsGrid.appendChild(card);
+            });
+        };
+        
+        // Yeni Anket Modalını Aç
+        document.getElementById('btn-new-poll').addEventListener('click', () => {
+            newPollModal.classList.add('visible');
+            newPollForm.reset();
+            // Varsayılan 2 seçeneğe düşür
+            choicesContainer.innerHTML = `
+                <div class="input-choice-wrapper">
+                    <input type="text" class="poll-choice-input" required style="width: 100%; padding: 11px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: #fff; font-family: inherit;" placeholder="Seçenek 1">
+                </div>
+                <div class="input-choice-wrapper">
+                    <input type="text" class="poll-choice-input" required style="width: 100%; padding: 11px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: #fff; font-family: inherit;" placeholder="Seçenek 2">
+                </div>
+            `;
+        });
+        
+        // Modal Kapatma İşlemleri
+        const closePollModal = () => newPollModal.classList.remove('visible');
+        document.getElementById('close-new-poll-modal-btn').addEventListener('click', closePollModal);
+        document.getElementById('btn-cancel-poll').addEventListener('click', closePollModal);
+        
+        // Dinamik Seçenek Girişi Ekle
+        document.getElementById('btn-add-choice-input').addEventListener('click', () => {
+            const currentInputs = choicesContainer.querySelectorAll('.input-choice-wrapper');
+            if (currentInputs.length >= 6) {
+                alert('En fazla 6 seçenek ekleyebilirsiniz.');
+                return;
+            }
+            
+            const nextIndex = currentInputs.length + 1;
+            const choiceWrapper = document.createElement('div');
+            choiceWrapper.className = 'input-choice-wrapper';
+            choiceWrapper.innerHTML = `
+                <input type="text" class="poll-choice-input" required style="width: 100%; padding: 11px; border-radius: 8px; border: 1px solid var(--border-color); background: rgba(0,0,0,0.3); color: #fff; font-family: inherit;" placeholder="Seçenek ${nextIndex}">
+                <button type="button" class="btn-remove-choice-input"><i class="fas fa-times"></i></button>
+            `;
+            choicesContainer.appendChild(choiceWrapper);
+            
+            // Silme event listener bağla
+            choiceWrapper.querySelector('.btn-remove-choice-input').addEventListener('click', () => {
+                choiceWrapper.remove();
+                // Placeholder numaralarını güncelle
+                choicesContainer.querySelectorAll('.poll-choice-input').forEach((input, idx) => {
+                    input.placeholder = `Seçenek ${idx + 1}`;
+                });
+            });
+        });
+        
+        // Anket Formunu Submit Et
+        newPollForm.addEventListener('submit', async e => {
+            e.preventDefault();
+            
+            const questionText = document.getElementById('poll-question').value.strip();
+            const endDate = document.getElementById('poll-end-date').value;
+            const choiceInputs = choicesContainer.querySelectorAll('.poll-choice-input');
+            
+            const choices = [];
+            choiceInputs.forEach(input => {
+                const val = input.value.strip();
+                if(val) choices.push(val);
+            });
+            
+            if (choices.length < 2) {
+                alert('En az 2 geçerli seçenek girmelisiniz.');
+                return;
+            }
+            
+            try {
+                const result = await apiRequest('api/polls/create/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        question_text: questionText,
+                        end_date: endDate,
+                        choices: choices
+                    })
+                });
+                
+                if (result && result.success) {
+                    alert('Anket başarıyla oluşturuldu ve yayınlandı!');
+                    closePollModal();
+                    loadAdminPolls();
+                } else {
+                    alert('Hata: ' + (result ? result.error : 'Anket oluşturulamadı.'));
+                }
+            } catch(error) {
+                alert('Hata: ' + error.message);
+            }
+        });
+        
+        // Anket Silme İşlemi (Delegation)
+        adminPollsGrid.addEventListener('click', async e => {
+            const btnDelete = e.target.closest('.btn-delete-poll');
+            if (btnDelete) {
+                const pollId = btnDelete.dataset.id;
+                if (confirm('Bu anketi silmek istediğinizden emin misiniz? Tüm oylama verileri kaybolacaktır.')) {
+                    try {
+                        const result = await apiRequest(`api/polls/${pollId}/delete/`, { method: 'POST' });
+                        if(result && result.success) {
+                            alert('Anket başarıyla silindi.');
+                            loadAdminPolls();
+                        }
+                    } catch(error) {
+                        alert('Silme işlemi başarısız: ' + error.message);
+                    }
+                }
+            }
+        });
+
+
+        // ==========================================
+        // GENEL KULLANICI DROPDOWN & LOGOUT
+        // ==========================================
+        userInfo.addEventListener('click', (e) => { 
+            e.stopPropagation(); 
+            const isVisible = userDropdown.style.display === 'block'; 
+            userDropdown.style.display = isVisible ? 'none' : 'block'; 
+            userInfo.querySelector('.fa-chevron-down').style.transform = isVisible ? 'rotate(0deg)' : 'rotate(180deg)'; 
+        });
+        document.addEventListener('click', () => { 
+            userDropdown.style.display = 'none'; 
+            if (userInfo) userInfo.querySelector('.fa-chevron-down').style.transform = 'rotate(0deg)'; 
+        });
+
+        logoutLink.addEventListener('click', async e => {
+            e.preventDefault();
+            await fetch('api/logout.php', { method: 'POST' });
+            window.location.href = '/';
+        });
+
+        // Girişte ilk sekmeyi yükle
+        loadAdminReports();
+        
+        // JS string helper
+        if(!String.prototype.strip) {
+            String.prototype.strip = function() {
+                return this.replace(/^\s+|\s+$/g, '');
+            };
+        }
+    });
+    </script>
+</body>
+</html>
